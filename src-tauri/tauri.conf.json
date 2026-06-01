@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MySQL Service Control",
+  "version": "0.1.0",
+  "identifier": "com.wildan.mysqlcontrol",
+  "bundle": {
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "targets": ["deb", "appimage"]
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "MySQL Service Control",
+        "width": 800,
+        "height": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "build": {
+    "beforeDevCommand": "yarn dev",
+    "beforeBuildCommand": "yarn build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  }
+}

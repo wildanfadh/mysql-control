@@ -4,6 +4,12 @@ MySQL Service Control is a small Tauri desktop app for Linux that lets you start
 
 This project is intentionally narrow. It is not a SQL client, it does not manage database users, and it does not send SQL queries to MySQL. It only controls the Linux service.
 
+Release builds are published in three Linux-friendly formats:
+
+- `AppImage` for broad Linux compatibility
+- `DEB` for Debian and Ubuntu based distributions
+- `RPM` for Fedora and other RPM based distributions
+
 ## Screenshot
 
 ![MySQL Service Control screenshot](docs/assets/mysql-service-control-active.png)
@@ -154,6 +160,12 @@ This app is only intended for systemd-based Linux environments.
 
 If the machine does not use systemd, service control will not work.
 
+### AppImage fails on Fedora with EGL, GTK, or WebKit warnings
+
+If the AppImage starts with errors such as `EGL_BAD_PARAMETER`, GTK parsing warnings, or WebKit process startup issues, prefer the native RPM package instead of the AppImage on Fedora.
+
+The release workflow publishes an `.rpm` package specifically for Fedora and other RPM-based distributions, and that package is the recommended install path there.
+
 ### The app only shows status but actions fail
 
 This usually means:
@@ -176,6 +188,7 @@ The repository workflow installs these dependencies before running `cargo check`
 - Default target service is `mysqld`
 - No runtime configuration for alternate unit names yet
 - Requires passwordless sudo for service-changing actions
+- AppImage may behave differently across Linux graphics stacks; RPM is recommended on Fedora when available
 
 ## License
 

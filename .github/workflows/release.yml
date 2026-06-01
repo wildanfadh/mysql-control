@@ -56,12 +56,13 @@ jobs:
             patchelf
 
       - name: Build Linux bundles
-        run: yarn tauri build --bundles appimage,deb
+        run: yarn tauri build --bundles appimage,deb,rpm
 
       - name: Verify generated artifacts
         run: |
           ls -la src-tauri/target/release/bundle/appimage
           ls -la src-tauri/target/release/bundle/deb
+          ls -la src-tauri/target/release/bundle/rpm
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
@@ -74,10 +75,12 @@ jobs:
             Included artifacts:
             - AppImage for broad Linux compatibility
             - DEB package for Debian and Ubuntu based distributions
+            - RPM package for Fedora and other RPM based distributions
           draft: false
           prerelease: false
           files: |
             src-tauri/target/release/bundle/appimage/*.AppImage
             src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

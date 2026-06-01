@@ -22,10 +22,13 @@ Run these commands and record the result:
 ```bash
 which systemctl
 systemctl is-active mysqld
+systemctl is-enabled mysqld
 systemctl status mysqld
 sudo -n systemctl start mysqld
 sudo -n systemctl stop mysqld
 sudo -n systemctl restart mysqld
+sudo -n systemctl enable mysqld
+sudo -n systemctl disable mysqld
 ```
 
 Expected:
@@ -209,9 +212,84 @@ Notes:
 
 -
 
+### 7. Enable action
+
+Setup:
+
+```bash
+sudo -n systemctl disable mysqld
+```
+
+Action:
+
+- click `Enable`
+
+Expected:
+
+- loading indicator appears
+- startup badge shows `Enabled`
+- `Enable` button becomes disabled
+- `Disable` button becomes enabled
+
+Result:
+
+- [ ] Pass
+- [ ] Fail
+
+Notes:
+
+-
+
+### 8. Disable action
+
+Setup:
+
+```bash
+sudo -n systemctl enable mysqld
+```
+
+Action:
+
+- click `Disable`
+
+Expected:
+
+- loading indicator appears
+- startup badge shows `Disabled`
+- `Disable` button becomes disabled
+- `Enable` button becomes enabled
+
+Result:
+
+- [ ] Pass
+- [ ] Fail
+
+Notes:
+
+-
+
+### 9. Enablement status persistence
+
+Action:
+
+- click `Enable` then `Refresh Status`
+
+Expected:
+
+- startup badge still shows `Enabled`
+
+Result:
+
+- [ ] Pass
+- [ ] Fail
+
+Notes:
+
+-
+
 ## Error scenarios
 
-### 7. Sudoers misconfiguration
+### 10. Sudoers misconfiguration
 
 Expected:
 

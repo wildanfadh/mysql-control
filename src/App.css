@@ -114,6 +114,12 @@ code {
   gap: 1rem;
 }
 
+.status-grid {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
 .status-badge {
   width: fit-content;
   padding: 0.5rem 0.9rem;
@@ -143,6 +149,31 @@ code {
   color: #ffd281;
 }
 
+.enablement-enabled {
+  background: rgba(29, 185, 84, 0.18);
+  color: #74f0a6;
+}
+
+.enablement-disabled {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+.enablement-static {
+  background: rgba(59, 130, 246, 0.18);
+  color: #9ec5ff;
+}
+
+.enablement-masked {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ff9f9f;
+}
+
+.enablement-unknown {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ff9f9f;
+}
+
 .status-message {
   margin: 0;
   color: #d7e0ea;
@@ -151,7 +182,7 @@ code {
 .action-panel {
   padding: 1.25rem;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 }
 

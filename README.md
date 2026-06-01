@@ -1,6 +1,6 @@
 # MySQL Service Control
 
-MySQL Service Control is a small Tauri desktop app for Linux that lets you start, stop, restart, and inspect the `mysqld` service from a simple UI.
+MySQL Service Control is a small Tauri desktop app for Linux that lets you start, stop, restart, enable, disable, and inspect the `mysqld` service from a simple UI.
 
 This project is intentionally narrow. It is not a SQL client, it does not manage database users, and it does not send SQL queries to MySQL. It only controls the Linux service.
 
@@ -20,6 +20,8 @@ Release builds are published in three Linux-friendly formats:
 - Start the service
 - Stop the service
 - Restart the service
+- Enable the service to start at boot
+- Disable the service from starting at boot
 - Refresh the service state at any time
 - Show command output and setup-related errors in the UI
 
@@ -27,7 +29,7 @@ Release builds are published in three Linux-friendly formats:
 
 1. Make sure your machine uses Linux with `systemd`.
 2. Confirm the MySQL service name is `mysqld`.
-3. Add a restricted `sudoers` rule for `systemctl start|stop|restart mysqld`.
+3. Add a restricted `sudoers` rule for `systemctl start|stop|restart|enable|disable mysqld`.
 4. Validate the commands in the terminal.
 5. Run the Tauri app.
 
@@ -46,7 +48,7 @@ Create a dedicated sudoers rule that only allows the required commands.
 Run `visudo` and add a rule like this, replacing `youruser` with your Linux username:
 
 ```sudoers
-youruser ALL=(root) NOPASSWD: /usr/bin/systemctl start mysqld, /usr/bin/systemctl stop mysqld, /usr/bin/systemctl restart mysqld
+youruser ALL=(root) NOPASSWD: /usr/bin/systemctl start mysqld, /usr/bin/systemctl stop mysqld, /usr/bin/systemctl restart mysqld, /usr/bin/systemctl enable mysqld, /usr/bin/systemctl disable mysqld
 ```
 
 On some distributions, `systemctl` may live in a different path. Check it with:
@@ -61,6 +63,8 @@ After that, validate the rule before using the app:
 sudo -n systemctl start mysqld
 sudo -n systemctl stop mysqld
 sudo -n systemctl restart mysqld
+sudo -n systemctl enable mysqld
+sudo -n systemctl disable mysqld
 ```
 
 If those commands still ask for a password or fail with a sudo policy error, the app will not be able to perform service actions.
@@ -72,9 +76,12 @@ The Tauri backend runs a fixed set of Linux commands and sends the result back t
 The current commands are:
 
 - `systemctl is-active mysqld`
+- `systemctl is-enabled mysqld`
 - `sudo -n systemctl start mysqld`
 - `sudo -n systemctl stop mysqld`
 - `sudo -n systemctl restart mysqld`
+- `sudo -n systemctl enable mysqld`
+- `sudo -n systemctl disable mysqld`
 
 The `-n` flag keeps `sudo` non-interactive so the desktop app does not block on a password prompt.
 

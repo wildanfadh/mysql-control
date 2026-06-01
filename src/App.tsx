@@ -10,19 +10,28 @@ type ServiceStatus =
   | "deactivating"
   | "unknown";
 
+type EnablementStatus =
+  | "enabled"
+  | "disabled"
+  | "static"
+  | "masked"
+  | "unknown";
+
 type ServiceResponse = {
   status: ServiceStatus;
+  enablementStatus: EnablementStatus;
   message: string;
   rawOutput: string;
   success: boolean;
 };
 
-type ActiveAction = "start" | "stop" | "restart" | "refresh" | null;
+type ActiveAction = "start" | "stop" | "restart" | "enable" | "disable" | "refresh" | null;
 
 const MIN_LOADING_MS = 500;
 
 function App() {
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>("unknown");
+  const [enablementStatus, setEnablementStatus] = useState<EnablementStatus>("unknown");
   const [statusMessage, setStatusMessage] = useState("Checking mysqld status...");
   const [rawOutput, setRawOutput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +49,7 @@ function App() {
       syncState(response);
     } catch (error) {
       setServiceStatus("unknown");
+      setEnablementStatus("unknown");
       setStatusMessage(`Failed to load mysqld status: ${String(error)}`);
       setRawOutput("");
     } finally {
@@ -49,7 +59,7 @@ function App() {
     }
   };
 
-  const runAction = async (command: "start_mysql" | "stop_mysql" | "restart_mysql") => {
+  const runAction = async (command: "start_mysql" | "stop_mysql" | "restart_mysql" | "enable_mysql" | "disable_mysql") => {
     const action = actionForCommand(command);
     const startedAt = Date.now();
 
@@ -63,6 +73,7 @@ function App() {
       syncState(response);
     } catch (error) {
       setServiceStatus("unknown");
+      setEnablementStatus("unknown");
       setStatusMessage(`Action failed: ${String(error)}`);
       setRawOutput("");
     } finally {
@@ -79,6 +90,8 @@ function App() {
   const startDisabled = loading || serviceStatus === "active" || serviceStatus === "activating";
   const stopDisabled = loading || serviceStatus === "inactive" || serviceStatus === "deactivating";
   const restartDisabled = loading || serviceStatus === "inactive" || serviceStatus === "deactivating";
+  const enableDisabled = loading || enablementStatus === "enabled";
+  const disableDisabled = loading || enablementStatus === "disabled";
 
   return (
     <main className="app-shell">
@@ -86,16 +99,24 @@ function App() {
         <p className="eyebrow">Linux only</p>
         <h1>MySQL Service Control</h1>
         <p className="hero-copy">
-          Start, stop, restart, and inspect the <code>mysqld</code> service on
+          Start, stop, restart, enable, disable, and inspect the <code>mysqld</code> service on
           systemd-based Linux environments.
         </p>
       </section>
 
       <section className="panel status-panel">
-        <div>
-          <p className="section-label">Current status</p>
-          <div className={`status-badge status-${serviceStatus}`}>
-            {formatStatus(serviceStatus)}
+        <div className="status-grid">
+          <div>
+            <p className="section-label">Service status</p>
+            <div className={`status-badge status-${serviceStatus}`}>
+              {formatStatus(serviceStatus)}
+            </div>
+          </div>
+          <div>
+            <p className="section-label">Startup</p>
+            <div className={`status-badge enablement-${enablementStatus}`}>
+              {formatEnablement(enablementStatus)}
+            </div>
           </div>
         </div>
 
@@ -125,6 +146,20 @@ function App() {
           <ButtonLabel idleLabel="Restart" loadingLabel="Restarting..." active={activeAction === "restart"} />
         </button>
         <button
+          className={activeAction === "enable" ? "is-loading" : undefined}
+          disabled={enableDisabled}
+          onClick={() => void runAction("enable_mysql")}
+        >
+          <ButtonLabel idleLabel="Enable" loadingLabel="Enabling..." active={activeAction === "enable"} />
+        </button>
+        <button
+          className={activeAction === "disable" ? "is-loading" : undefined}
+          disabled={disableDisabled}
+          onClick={() => void runAction("disable_mysql")}
+        >
+          <ButtonLabel idleLabel="Disable" loadingLabel="Disabling..." active={activeAction === "disable"} />
+        </button>
+        <button
           className={activeAction === "refresh" ? "is-loading" : undefined}
           disabled={loading}
           onClick={() => void refreshStatus()}
@@ -146,6 +181,7 @@ function App() {
 
   function syncState(response: ServiceResponse) {
     setServiceStatus(response.status);
+    setEnablementStatus(response.enablementStatus);
     setStatusMessage(response.message);
     setRawOutput(response.rawOutput);
   }
@@ -196,18 +232,22 @@ function formatStatus(status: ServiceStatus) {
   }
 }
 
-function labelForCommand(command: "start_mysql" | "stop_mysql" | "restart_mysql") {
-  switch (command) {
-    case "start_mysql":
-      return "start";
-    case "stop_mysql":
-      return "stop";
-    case "restart_mysql":
-      return "restart";
+function formatEnablement(status: EnablementStatus) {
+  switch (status) {
+    case "enabled":
+      return "Enabled";
+    case "disabled":
+      return "Disabled";
+    case "static":
+      return "Static";
+    case "masked":
+      return "Masked";
+    default:
+      return "Unknown";
   }
 }
 
-function actionForCommand(command: "start_mysql" | "stop_mysql" | "restart_mysql"): Exclude<ActiveAction, "refresh" | null> {
+function labelForCommand(command: "start_mysql" | "stop_mysql" | "restart_mysql" | "enable_mysql" | "disable_mysql") {
   switch (command) {
     case "start_mysql":
       return "start";
@@ -215,6 +255,25 @@ function actionForCommand(command: "start_mysql" | "stop_mysql" | "restart_mysql
       return "stop";
     case "restart_mysql":
       return "restart";
+    case "enable_mysql":
+      return "enable";
+    case "disable_mysql":
+      return "disable";
+  }
+}
+
+function actionForCommand(command: "start_mysql" | "stop_mysql" | "restart_mysql" | "enable_mysql" | "disable_mysql"): Exclude<ActiveAction, "refresh" | null> {
+  switch (command) {
+    case "start_mysql":
+      return "start";
+    case "stop_mysql":
+      return "stop";
+    case "restart_mysql":
+      return "restart";
+    case "enable_mysql":
+      return "enable";
+    case "disable_mysql":
+      return "disable";
   }
 }
 

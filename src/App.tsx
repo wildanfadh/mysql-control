@@ -17,14 +17,23 @@ type ServiceResponse = {
   success: boolean;
 };
 
+type ActiveAction = "start" | "stop" | "restart" | "refresh" | null;
+
+const MIN_LOADING_MS = 500;
+
 function App() {
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>("unknown");
   const [statusMessage, setStatusMessage] = useState("Checking mysqld status...");
   const [rawOutput, setRawOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<ActiveAction>("refresh");
 
   const refreshStatus = async () => {
+    const startedAt = Date.now();
+
     setLoading(true);
+    setActiveAction("refresh");
+    setStatusMessage("Refreshing mysqld status...");
 
     try {
       const response = await invoke<ServiceResponse>("get_mysql_status");
@@ -34,12 +43,18 @@ function App() {
       setStatusMessage(`Failed to load mysqld status: ${String(error)}`);
       setRawOutput("");
     } finally {
+      await ensureMinimumLoadingTime(startedAt);
       setLoading(false);
+      setActiveAction(null);
     }
   };
 
   const runAction = async (command: "start_mysql" | "stop_mysql" | "restart_mysql") => {
+    const action = actionForCommand(command);
+    const startedAt = Date.now();
+
     setLoading(true);
+    setActiveAction(action);
     setStatusMessage(`Running ${labelForCommand(command)}...`);
     setRawOutput("");
 
@@ -51,7 +66,9 @@ function App() {
       setStatusMessage(`Action failed: ${String(error)}`);
       setRawOutput("");
     } finally {
+      await ensureMinimumLoadingTime(startedAt);
       setLoading(false);
+      setActiveAction(null);
     }
   };
 
@@ -86,10 +103,34 @@ function App() {
       </section>
 
       <section className="panel action-panel">
-        <button disabled={startDisabled} onClick={() => void runAction("start_mysql")}>Start</button>
-        <button disabled={stopDisabled} onClick={() => void runAction("stop_mysql")}>Stop</button>
-        <button disabled={restartDisabled} onClick={() => void runAction("restart_mysql")}>Restart</button>
-        <button disabled={loading} onClick={() => void refreshStatus()}>Refresh Status</button>
+        <button
+          className={activeAction === "start" ? "is-loading" : undefined}
+          disabled={startDisabled}
+          onClick={() => void runAction("start_mysql")}
+        >
+          <ButtonLabel idleLabel="Start" loadingLabel="Starting..." active={activeAction === "start"} />
+        </button>
+        <button
+          className={activeAction === "stop" ? "is-loading" : undefined}
+          disabled={stopDisabled}
+          onClick={() => void runAction("stop_mysql")}
+        >
+          <ButtonLabel idleLabel="Stop" loadingLabel="Stopping..." active={activeAction === "stop"} />
+        </button>
+        <button
+          className={activeAction === "restart" ? "is-loading" : undefined}
+          disabled={restartDisabled}
+          onClick={() => void runAction("restart_mysql")}
+        >
+          <ButtonLabel idleLabel="Restart" loadingLabel="Restarting..." active={activeAction === "restart"} />
+        </button>
+        <button
+          className={activeAction === "refresh" ? "is-loading" : undefined}
+          disabled={loading}
+          onClick={() => void refreshStatus()}
+        >
+          <ButtonLabel idleLabel="Refresh Status" loadingLabel="Refreshing..." active={activeAction === "refresh"} />
+        </button>
       </section>
 
       <section className="panel output-panel">
@@ -108,6 +149,34 @@ function App() {
     setStatusMessage(response.message);
     setRawOutput(response.rawOutput);
   }
+
+  async function ensureMinimumLoadingTime(startedAt: number) {
+    const elapsed = Date.now() - startedAt;
+    const remaining = MIN_LOADING_MS - elapsed;
+
+    if (remaining > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, remaining));
+    }
+  }
+}
+
+type ButtonLabelProps = {
+  idleLabel: string;
+  loadingLabel: string;
+  active: boolean;
+};
+
+function ButtonLabel({ idleLabel, loadingLabel, active }: ButtonLabelProps) {
+  if (!active) {
+    return <>{idleLabel}</>;
+  }
+
+  return (
+    <span className="button-label">
+      <span className="spinner" aria-hidden="true" />
+      {loadingLabel}
+    </span>
+  );
 }
 
 function formatStatus(status: ServiceStatus) {
@@ -128,6 +197,17 @@ function formatStatus(status: ServiceStatus) {
 }
 
 function labelForCommand(command: "start_mysql" | "stop_mysql" | "restart_mysql") {
+  switch (command) {
+    case "start_mysql":
+      return "start";
+    case "stop_mysql":
+      return "stop";
+    case "restart_mysql":
+      return "restart";
+  }
+}
+
+function actionForCommand(command: "start_mysql" | "stop_mysql" | "restart_mysql"): Exclude<ActiveAction, "refresh" | null> {
   switch (command) {
     case "start_mysql":
       return "start";
